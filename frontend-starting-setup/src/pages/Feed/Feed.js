@@ -63,7 +63,7 @@ class Feed extends Component {
             return {
               ...post,
               imagePath: post.imageUrl
-            };
+            }
           }),
           totalPosts: resData.totalItems,
           postsLoading: false

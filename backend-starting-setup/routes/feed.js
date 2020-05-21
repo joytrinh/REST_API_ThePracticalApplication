@@ -14,17 +14,14 @@ router.post('/post', [
 
 router.get('/post/:postId', feedController.getPost)
 
-router.put(
-    '/post/:postId',
-    [
-      body('title')
-        .trim()
-        .isLength({ min: 5 }),
-      body('content')
-        .trim()
-        .isLength({ min: 5 })
-    ],
-    feedController.updatePost
-  );
+/* Editing a post essentially is like replacing it, replacing the old post with a new one, we'll keep the
+old ID but that is it. Since we'll replace a resource, I'll use the put method here which we haven't used 
+before because with normal browser forms, you're not able to send it, through asynchronous requests 
+triggered by javascript
+*/
+router.put('/post/:postId', [
+    body('title').trim().isLength({min: 5}),
+    body('content').trim().isLength({min: 5})
+], feedController.updatePost)
 
 module.exports = router
