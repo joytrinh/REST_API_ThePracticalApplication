@@ -26,4 +26,5 @@ router.put('/post/:postId', isAuth, [
 ], feedController.updatePost)
 
 router.delete('/post/:postId', isAuth, feedController.deletePost)
+
 module.exports = router
