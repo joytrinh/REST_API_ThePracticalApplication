@@ -58,6 +58,23 @@ mongoose
     "mongodb+srv://tuyentrinh:tuyen1234@cluster0-7dvwp.azure.mongodb.net/messages?authSource=admin&replicaSet=Cluster0-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
   )
   .then((result) => {
-    app.listen(8000);
+    const server = app.listen(8000);
+    const io = require('./socket').init(server)
+    io.on('connection', socket => {
+      console.log('Client connected.')
+    })
   })
   .catch((err) => console.log(err));
+
+  /*
+  keep in mind, socket.io uses a different protocol, web sockets and therefore web socket requests 
+  will not interfere with the normal http requests which are sent by default by the browser.
+  Web sockets build up on http, now since this server here uses http, we used that http server to 
+  establish our web socket connection that uses that http protocol as a basis you could say.
+  to wait for new connections,
+
+so whenever a new client connects to us. So then we execute a certain function where we get the 
+client, the so-called socket that did connect as an argument or the connection as an argument to be 
+precise, so this is the connection between our server and the client which connected and this 
+function will be executed for every new client that connects,
+  */
