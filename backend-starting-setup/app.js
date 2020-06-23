@@ -6,7 +6,7 @@ const multer = require("multer");
 const graphqlHttp = require('express-graphql')
 const graphqlSchema = require('./graphql/schema')
 const graphqlResolver = require('./graphql/resolvers')
-const auth = require('./middleware/is-auth');
+const auth = require('./middleware/auth');
 const app = express();
 
 const fileStorage = multer.diskStorage({
