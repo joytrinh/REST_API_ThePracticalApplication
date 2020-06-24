@@ -54,28 +54,52 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    fetch('http://localhost:8000/feed/posts?page=' + page, {
+    let graphqlQuery = {
+      query: `
+      {
+        posts {page: ${page}} {
+          posts {
+            _id
+            title
+            content
+            imageUrl
+            creator {
+              name
+            }
+            createdAt
+          }
+          totalPosts
+        }
+      }
+      `
+    }
+    fetch('http://localhost:8000/graphql', {
+      method: 'POST ',
       headers: {
         // How we add token in header and send to backend
-        Authorization: 'Bearer ' + this.props.token // this.props.token: this allows us to get the token in react
+        Authorization: 'Bearer ' + this.props.token, // this.props.token: this allows us to get the token in react
         // we set variable 'Authorization' in app.js backend, 'Bearer ' is a comment of convention 
-      }
+        'Content-Type': 'application/json'
+      },
+      BODY: JSON.stringify(graphqlQuery)
     })
       .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch posts.');
-        }
         return res.json();
       })
       .then(resData => {
+        if(resData.errors){
+          throw new Error(
+            "Fetching posts failed!"
+          );
+        } 
         this.setState({
-          posts: resData.posts.map(post => {
+          posts: resData.data.posts.posts.map(post => {
             return {
               ...post,
               imagePath: post.imageUrl
             }
           }),
-          totalPosts: resData.totalItems,
+          totalPosts: resData.data.posts.posts.totalPosts,
           postsLoading: false
         });
       })
@@ -163,11 +187,6 @@ class Feed extends Component {
         return res.json();
       })
       .then(resData => {
-        if (resData.errors && resData.errors[0].status === 422) {
-          throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
-          );
-        }
         if(resData.errors){
           throw new Error(
             "User creation failed!"
@@ -187,8 +206,9 @@ class Feed extends Component {
               p => p._id === prevState.editPost._id
             );
             updatedPosts[postIndex] = post;
-          } else if (prevState.posts.length < 2) {
-            updatedPosts = prevState.posts.concat(post);
+          } else {
+            updatedPosts.pop()
+            updatedPosts.unshift(post);
           }
           return {
             posts: updatedPosts,
