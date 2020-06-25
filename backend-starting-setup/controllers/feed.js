@@ -76,8 +76,8 @@ exports.createPost = async (req, res, next) => {
 
 exports.getPost = async (req, res, next) => {
   const postId = req.params.postId;
+  const post = await Post.findById(postId);
   try {
-    const post = await Post.findById(postId);
     if (!post) {
       const error = new Error("Could not find post!");
       error.statusCode = 404;
@@ -135,7 +135,7 @@ exports.updatePost = async (req, res, next) => {
     post.content = content;
 
     const result = await post.save();
-    io.getIO().emit('posts', {action: 'update', post: 'result' })
+    io.getIO().emit('posts', {action: 'update', post: result })
 
     res.status(200).json({ message: "Post updated!", post: result });
   } catch (err) {
@@ -163,7 +163,6 @@ exports.deletePost = async (req, res, next) => {
     }
     // Check logged in user
     clearImage(post.imageUrl);
-
     await Post.findByIdAndRemove(postId);
     const user = await User.findById(req.userId);
     user.posts.pull(postId);

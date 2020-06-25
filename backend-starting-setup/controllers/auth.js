@@ -56,7 +56,7 @@ exports.login = async (req, res, next) => {
     }
     const token = jwt.sign(
       { email: loadedUser.email, userId: loadedUser._id.toString() },
-      "secretString",
+      "supersecret",
       { expiresIn: "1h" }
     );
     res.status(200).json({ token: token, userId: loadedUser._id.toString() });
@@ -88,13 +88,6 @@ exports.getStatus = async (req, res, next) => {
 };
 
 exports.updateStatus = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    const error = new Error("Validation failed");
-    error.statusCode = 422;
-    error.data = errors.array();
-    throw error;
-  }
   const newStatus = req.body.status
 
   try {

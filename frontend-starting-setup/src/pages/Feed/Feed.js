@@ -54,10 +54,10 @@ class Feed extends Component {
       page--;
       this.setState({ postPage: page });
     }
-    let graphqlQuery = {
+    const graphqlQuery = {
       query: `
       {
-        posts {page: ${page}} {
+        posts(page: ${page}){
           posts {
             _id
             title
@@ -81,7 +81,7 @@ class Feed extends Component {
         // we set variable 'Authorization' in app.js backend, 'Bearer ' is a comment of convention 
         'Content-Type': 'application/json'
       },
-      BODY: JSON.stringify(graphqlQuery)
+      body: JSON.stringify(graphqlQuery)
     })
       .then(res => {
         return res.json();
@@ -99,7 +99,7 @@ class Feed extends Component {
               imagePath: post.imageUrl
             }
           }),
-          totalPosts: resData.data.posts.posts.totalPosts,
+          totalPosts: resData.data.posts.totalPosts,
           postsLoading: false
         });
       })
@@ -110,12 +110,12 @@ class Feed extends Component {
       event.preventDefault();
       
       fetch('http://localhost:8000/auth/status', {
-        method: 'PATCH',
-        body: JSON.stringify({status: this.state.status}),
+        method: 'PATCH',        
         headers: {
           Authorization: 'Bearer ' + this.props.token,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({status: this.state.status})
       })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -154,50 +154,66 @@ class Feed extends Component {
     });
     // Set up data (with image!)
     const formData = new FormData()
-    formData.append('title', postData.title)
-    formData.append('content', postData.content)
     formData.append('image', postData.image)
-
-    let graphqlQuery = {
-      query: `
-        mutation {
-          createPost(userInput: { title: "${postData.title}", content: "${postData.content}", imageUrl: "some url"}) {
-            _id
-            title
-            content
-            imageUrl
-            creator {
-              name
-            }
-            createdAt
-          }
-        }
-      `
+    if (this.state.editPost) {
+      formData.append('oldPath', this.state.editPost.imagePath)
     }
-
-    fetch('http://localhost:8000/graphql', {
-      method: "POST",
-      body: JSON.stringify(graphqlQuery),
+    fetch('http://localhost:8000/post-image', {
+      method: "PUT",
       headers: {
-        Authorization: 'Bearer ' + this.props.token,
-        'Content-Type': 'application/json'
+        Authorization: 'Bearer ' + this.props.token
+      },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(fileResData => {
+      const imageUrl = fileResData.filePath
+      let graphqlQuery = {
+        query: `
+          mutation {
+            createPost(postInput: { title: "${postData.title}", content: "${postData.content}", imageUrl: "${imageUrl}"}) {
+              _id
+              title
+              content
+              imageUrl
+              creator {
+                name
+              }
+              createdAt
+            }
+          }
+        `
       }
+  
+      fetch('http://localhost:8000/graphql', {
+        method: "POST",
+        body: JSON.stringify(graphqlQuery),
+        headers: {
+          Authorization: 'Bearer ' + this.props.token,
+          'Content-Type': 'application/json'
+        }
+      })
     })
       .then(res => {
         return res.json();
       })
       .then(resData => {
-        if(resData.errors){
+        if (resData.errors && resData.errors[0].status === 422) {
           throw new Error(
-            "User creation failed!"
+            "Validation failed. Make sure the email address isn't used yet!"
           );
-        } 
+        }
+        if (resData.errors) {
+          throw new Error('User login failed!');
+        }
+        console.log(resData);
         const post = {
           _id: resData.data.createPost._id,
           title: resData.data.createPost.title,
           content: resData.data.createPost.content,
           creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt
+          createdAt: resData.data.createPost.createdAt,
+          imagePath: resData.data.createPost.imageUrl
         };
         this.setState(prevState => {
           let updatedPosts = [...prevState.posts];
@@ -249,10 +265,11 @@ class Feed extends Component {
       })
       .then(resData => {
         console.log(resData);
-        this.setState(prevState => {
-          const updatedPosts = prevState.posts.filter(p => p._id !== postId);
-          return { posts: updatedPosts, postsLoading: false };
-        });
+        this.loadPosts();
+        // this.setState(prevState => {
+        //   const updatedPosts = prevState.posts.filter(p => p._id !== postId);
+        //   return { posts: updatedPosts, postsLoading: false };
+        // });
       })
       .catch(err => {
         console.log(err);

@@ -30,7 +30,7 @@ module.exports = {
     const user = new User({
       email: userInput.email,
       name: userInput.name,
-      password: hashedPw,
+      password: hashedPw
     });
     const createdUser = await user.save();
     return { ...createdUser._doc, _id: createdUser._id.toString() };
@@ -51,7 +51,7 @@ module.exports = {
     const token = jwt.sign(
       {
         userId: user._id.toString(),
-        email: user.email,
+        email: user.email
       },
       "supersecret",
       { expiresIn: "1h" }
@@ -118,7 +118,7 @@ module.exports = {
     const totalPosts = await Post.find().countDocuments();
     const posts = await Post.find()
     .sort({ createdAt: -1 })
-    .skip((page - 1) + perPage)
+    .skip((page - 1) * perPage)
     .limit(perPage)
     .populate("creator");
     return {
