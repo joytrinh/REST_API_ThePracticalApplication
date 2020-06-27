@@ -74,7 +74,7 @@ class Feed extends Component {
       `
     }
     fetch('http://localhost:8000/graphql', {
-      method: 'POST ',
+      method: 'POST',
       headers: {
         // How we add token in header and send to backend
         Authorization: 'Bearer ' + this.props.token, // this.props.token: this allows us to get the token in react
@@ -107,15 +107,16 @@ class Feed extends Component {
   };
 
   statusUpdateHandler = event => {
-      event.preventDefault();
-      
+      event.preventDefault();      
       fetch('http://localhost:8000/auth/status', {
         method: 'PATCH',        
         headers: {
           Authorization: 'Bearer ' + this.props.token,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({status: this.state.status})
+        body: JSON.stringify({
+          status: this.state.status
+        })
       })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
